@@ -1,5 +1,5 @@
 var exec = require('cordova/exec');
 
-exports.coolMethod = function (arg0, success, error) {
-    exec(success, error, 'cordova-payfort-plugin', 'coolMethod', [arg0]);
+exports.generateSignature = function (json, pass, success, error) {
+    exec(success, error, 'Payfort', 'generateSignature', [json,pass]);
 };

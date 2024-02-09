@@ -16,20 +16,28 @@ class Payfort: CDVPlugin {
     func initialize(_ command: CDVInvokedUrlCommand){
     }
     
-    private func sendPluginResult(status: CDVCommandStatus, message: String) {
-        var pluginResult = CDVPluginResult(status: status, messageAs: message)
-        if let command = self.command {
-            self.commandDelegate!.send(pluginResult, callbackId: command.callbackId)
-        }
+    private func sendPluginResult(callbackId: String, status: CDVCommandStatus, message: String = "") {
+        let pluginResult = CDVPluginResult(status: status, messageAs: message)
+        self.commandDelegate!.send(pluginResult, callbackId: callbackId)
     }
 
-    @objc
-    func generateSignature(from jsonString: String, passphrase: String) -> String? {
+    @objc(generateSignature:)
+    func generateSignature(_ command: CDVInvokedUrlCommand) {
+        guard command.arguments.count >= 2,
+              let jsonString = command.arguments[0] as? String,
+              let passphrase = command.arguments[1] as? String else {
+            self.commandDelegate.send(
+                CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid arguments"),
+                callbackId: command.callbackId
+            )
+            return
+        }
         // Step 1: Parse JSON String
         guard let jsonData = jsonString.data(using: .utf8),
               let parameters = try? JSONSerialization.jsonObject(with: jsonData) as? [String: String] else {
             print("🚨 Error parsing JSON")
-            return nil
+            sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_OK, message: "Error parsing JSON")
+            return
         }
         
         // Step 2: Sort and concatenate parameters as per the signature pattern
@@ -37,17 +45,24 @@ class Payfort: CDVPlugin {
         let concatenatedParams = sortedParameters.reduce("") { result, param in
             result + "\(param.key)=\(param.value)"
         }
+        print("⭐️ concatenatedParams: \(concatenatedParams)")
         
         // Step 3: Add passphrase
         let stringWithPassphrase = "\(passphrase)\(concatenatedParams)\(passphrase)"
+        print("⭐️ stringWithPassphrase: \(stringWithPassphrase)")
         
         // Step 4: Generate SHA-256 signature
         if #available(iOS 13.0, *) {
-            guard let data = stringWithPassphrase.data(using: .utf8) else { return nil }
+            guard let data = stringWithPassphrase.data(using: .utf8)
+            else {
+                sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Error generating signature")
+                return
+            }
             let hash = SHA256.hash(data: data)
-            return hash.map { String(format: "%02x", $0) }.joined()
+            print("⭐️ Signature: " + hash.map { String(format: "%02x", $0) }.joined())
+            sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_OK, message: hash.map { String(format: "%02x", $0) }.joined())
         } else {
-            return nil
+            sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Error generating signature")
         }
     }
 }

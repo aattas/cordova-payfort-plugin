@@ -4,7 +4,7 @@
 	xmlns:android="http://schemas.android.com/apk/res/android">
 	<name>Payfort</name>
 	<js-module name="Payfort" src="www/Payfort.js">
-		<clobbers target="cordova.plugins.cordova-payfort-plugin" />
+		<clobbers target="cordova.plugins.payfort" />
 	</js-module>
 	<platform name="ios">
 		<podspec>
