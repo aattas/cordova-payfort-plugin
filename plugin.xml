@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-payfort-plugin" version="1.0"
+	xmlns="http://apache.org/cordova/ns/plugins/1.0"
+	xmlns:android="http://schemas.android.com/apk/res/android">
+	<name>Payfort</name>
+	<js-module name="Payfort" src="www/Payfort.js">
+		<clobbers target="cordova.plugins.cordova-payfort-plugin" />
+	</js-module>
+	<platform name="ios">
+		<podspec>
+			<pods use-frameworks="true">
+				<pod name="PayFortSDK" />
+			</pods>
+		</podspec>
+		<hook type="after_plugin_install" src="hooks/modify_podfile.js"/>
+		<hook type="before_plugin_install" src="hooks/install_prerequisites.js"/>
+        <hook type="after_plugin_add" src="hooks/add_swift_support.js" />
+		<config-file parent="/*" target="config.xml">
+			<feature name="Payfort">
+				<param name="ios-package" value="Payfort" />
+			</feature>
+		</config-file>
+		<source-file src="src/ios/Payfort.swift" />
+	</platform>
+</plugin>
