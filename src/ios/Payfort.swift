@@ -6,11 +6,11 @@
 
 import Foundation
 import CryptoKit
+import PayFortSDK
 
 @objc
 class Payfort: CDVPlugin {
     var command: CDVInvokedUrlCommand?
-    
     
     @objc(initialize:)
     func initialize(_ command: CDVInvokedUrlCommand){
@@ -20,16 +20,34 @@ class Payfort: CDVPlugin {
         let pluginResult = CDVPluginResult(status: status, messageAs: message)
         self.commandDelegate!.send(pluginResult, callbackId: callbackId)
     }
+    
+    @objc(getUdid:)
+    func getUdid(_ command: CDVInvokedUrlCommand){
+        var payFort: PayFortController!
+        
+        if let environment = command.arguments[0] as? String {
+            if environment == "production" {
+                payFort = PayFortController(enviroment: .production)
+            } else if environment == "development" {
+                payFort = PayFortController(enviroment: .sandBox)
+            } else {
+                sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Invalid arguments")
+                return
+            }
+        } else {
+            sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Invalid arguments")
+            return
+        }
+        let udid = payFort.getUDID()
+        sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_OK, message: udid)
+    }
 
     @objc(generateSignature:)
     func generateSignature(_ command: CDVInvokedUrlCommand) {
         guard command.arguments.count >= 2,
               let jsonString = command.arguments[0] as? String,
               let passphrase = command.arguments[1] as? String else {
-            self.commandDelegate.send(
-                CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid arguments"),
-                callbackId: command.callbackId
-            )
+            sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Invalid arguments")
             return
         }
         // Step 1: Parse JSON String
