@@ -263,28 +263,27 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
               let phoneNumber = cdvcommand.arguments[18] as? String,
               //let tokenName = cdvcommand.arguments[19] as? String,
               //let settlementReference = cdvcommand.arguments[20] as? String,
-                let merchantExtra = cdvcommand.arguments[21] as? String,
-              let merchantExtra1 = cdvcommand.arguments[22] as? String,
-              let merchantExtra2 = cdvcommand.arguments[23] as? String,
-              let merchantExtra3 = cdvcommand.arguments[24] as? String,
-              let merchantExtra4 = cdvcommand.arguments[25] as? String,
-              let merchantExtra5 = cdvcommand.arguments[26] as? String,
+//              let merchantExtra = cdvcommand.arguments[21] as? String,
+//              let merchantExtra1 = cdvcommand.arguments[22] as? String,
+//              let merchantExtra2 = cdvcommand.arguments[23] as? String,
+//              let merchantExtra3 = cdvcommand.arguments[24] as? String,
+//              let merchantExtra4 = cdvcommand.arguments[25] as? String,
+//              let merchantExtra5 = cdvcommand.arguments[26] as? String,
               let payfortMerchantId = cdvcommand.arguments[27] as? String, //new
               let accessCode = cdvcommand.arguments[29] as? String, //new
               let passPhrase = cdvcommand.arguments[30] as? String //new
         else { self.command = nil; return nil }
         
-        //        let request = NSMutableDictionary()
         var request = [String: String]()
         
         // Mandatory fields
         request["digital_wallet"] = "APPLE_PAY"
         request["command"] = "PURCHASE"
         
-        //request["access_code"] = accessCode 🚨
-        //request["merchant_identifier"] = payfortMerchantId 🚨
+        //request["access_code"] = accessCode
+        //request["merchant_identifier"] = payfortMerchantId
         request["merchant_reference"] = merchantReference
-        request["amount"] = String(amount)
+        request["amount"] = String(amount*100) //Multiplyer for adjusting the value to Payfort
         request["currency"] = currency
         request["language"] = language
         request["customer_email"] = customerEmail
@@ -294,7 +293,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         request["customer_name"] = customerName
         
         // Merchant extras
-        //        request["merchant_extra"] = merchantExtra 🚨
+        //        request["merchant_extra"] = merchantExtra
         //        request["merchant_extra1"] = merchantExtra1
         //        request["merchant_extra2"] = merchantExtra2
         //        request["merchant_extra3"] = merchantExtra3
@@ -311,7 +310,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
                 request["apple_signature"] = signature
             }
             if let header = paymentData["header"] as? Dictionary<String,String> {
-//Payfort SDK complain about these:
+//Payfort SDK complains about these:
 //                if let transactionId = header["transactionId"] {
 //                    request["apple_transactionId"] = transactionId
 //                }
@@ -323,7 +322,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
 //                }
             }
             
-//Apple Pay do not return these:
+//Apple Pay does not return these:
 //            if let paymentMethod = paymentData["paymentMethod"] as? String {
 //                request["apple_paymentMethod"] = paymentMethod
 //            }
