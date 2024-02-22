@@ -6,7 +6,7 @@ module.exports = function(context) {
     const podfilePath = path.join(iosPlatformPath, 'Podfile');
 
     const postInstallScript = `
-\\npost_install do |installer|
+post_install do |installer|
   installer.pods_project.targets.each do |target|
     if ['PayFortSDK'].include? target.name
       target.build_configurations.each do |config|
