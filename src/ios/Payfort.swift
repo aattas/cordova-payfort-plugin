@@ -102,7 +102,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
               let amexEnabled = cdvcommand.arguments[4] as? Bool,
               let madaEnabled = cdvcommand.arguments[31] as? Bool,
               let merchantIdentifier = cdvcommand.arguments[7] as? String,
-              let amountValue = cdvcommand.arguments[9] as? Int,
+              let amountValue = cdvcommand.arguments[9] as? Double,
               let currency = cdvcommand.arguments[10] as? String,
               let label = cdvcommand.arguments[32] as? String else {
             print("Invalid arguments")
@@ -251,7 +251,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
     private func preparePayFortRequest(from payment: PKPayment, cdvcommand: CDVInvokedUrlCommand?) -> Dictionary<String, String>? {
         guard let cdvcommand = cdvcommand else { return nil }
         guard let merchantReference = cdvcommand.arguments[8] as? String,
-              let amount = cdvcommand.arguments[9] as? Int,
+              let amount = cdvcommand.arguments[9] as? Double,
               let currency = cdvcommand.arguments[10] as? String,
               let language = cdvcommand.arguments[11] as? String,
               let customerEmail = cdvcommand.arguments[12] as? String,
@@ -284,7 +284,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         //request["access_code"] = accessCode
         //request["merchant_identifier"] = payfortMerchantId
         request["merchant_reference"] = merchantReference
-        request["amount"] = String(amount*100) //Multiplyer for adjusting the value to Payfort
+        request["amount"] = String(Int(amount*100)) //Multiplyer for adjusting the value to Payfort
         request["currency"] = currency
         request["language"] = language
         request["customer_email"] = customerEmail
