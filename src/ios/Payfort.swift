@@ -141,32 +141,6 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         print("paymentRequest: \(paymentRequest)")
         return paymentRequest
     }
-
-    // MARK: PKPaymentAuthorizationViewControllerDelegate methods
-    func paymentAuthorizationViewController(_ controller: PKPaymentAuthorizationViewController, didAuthorizePayment payment: PKPayment, completion: @escaping (PKPaymentAuthorizationStatus) -> Void) {
-        self.paymentCompletion = completion // Store the completion handler
-        self.payment = payment
-        
-        // Prepare the request for PayFort
-        guard var request = preparePayFortRequest(from: payment, cdvcommand: self.command) else {
-            //CALLBACK AQUI
-            completion(.failure)
-            resetClassVariables()
-            return
-        }
-        
-        if let signature = request["signature"] {
-            request.removeValue(forKey: "signature")
-            self.applePayRequest = request
-            if let cdvcommand = self.command {
-                self.sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_OK, message: signature)
-                    return
-            }
-        } else {
-            //CALLBACK
-        }
-        
-    }
     
     @objc(callPayFortForApplePay:)
     func callPayFortForApplePay(_ command: CDVInvokedUrlCommand){
@@ -220,30 +194,6 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         } else {
             resetClassVariables()
             sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Invalid Apple Pay parameters")
-        }
-    }
-    
-    private func resetClassVariables(){
-        self.command = nil
-        self.paymentCompletion = nil
-        self.applePayRequest = nil
-        self.currentCallbackId = nil
-        self.payFort = nil
-        self.payment = nil
-        self.paymentState = PaymentState.notStarted
-    }
-    
-    func paymentAuthorizationViewControllerDidFinish(_ controller: PKPaymentAuthorizationViewController) {
-        controller.dismiss(animated: true) {
-//            switch self.paymentState {
-//            case .success:
-//                print("✅ Payment completed successfully.")
-//            case .failure:
-//                print("🚨 Payment failed.")
-//            case .notStarted, .userCancelled:
-//                print("⚠️ Payment was canceled by the user.")
-//            }
-            self.resetClassVariables()
         }
     }
     
@@ -311,7 +261,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
                 request["apple_signature"] = signature
             }
 
-//Payfort SDK complains about these:
+//Payfort SDK complains if we enable these (although their documentation says it's needed):
 //            if let header = paymentData["header"] as? Dictionary<String,String> {
 //                if let transactionId = header["transactionId"] {
 //                    request["apple_transactionId"] = transactionId
@@ -361,6 +311,56 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         }
         
         return request
+    }
+    
+    private func resetClassVariables(){
+        self.command = nil
+        self.paymentCompletion = nil
+        self.applePayRequest = nil
+        self.currentCallbackId = nil
+        self.payFort = nil
+        self.payment = nil
+        self.paymentState = PaymentState.notStarted
+    }
+
+    // MARK: PKPaymentAuthorizationViewControllerDelegate methods
+    func paymentAuthorizationViewController(_ controller: PKPaymentAuthorizationViewController, didAuthorizePayment payment: PKPayment, completion: @escaping (PKPaymentAuthorizationStatus) -> Void) {
+        self.paymentCompletion = completion // Store the completion handler
+        self.payment = payment
+        
+        // Prepare the request for PayFort
+        guard var request = preparePayFortRequest(from: payment, cdvcommand: self.command) else {
+            //CALLBACK AQUI
+            completion(.failure)
+            resetClassVariables()
+            return
+        }
+        
+        if let signature = request["signature"] {
+            request.removeValue(forKey: "signature")
+            self.applePayRequest = request
+            if let cdvcommand = self.command {
+                self.sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_OK, message: signature)
+                    return
+            }
+        } else {
+            //CALLBACK
+        }
+        
+    }
+    
+    func paymentAuthorizationViewControllerDidFinish(_ controller: PKPaymentAuthorizationViewController) {
+        controller.dismiss(animated: true) {
+//            switch self.paymentState {
+//            case .success:
+//                print("✅ Payment completed successfully.")
+//            case .failure:
+//                print("🚨 Payment failed.")
+//            case .notStarted, .userCancelled:
+//                print("⚠️ Payment was canceled by the user.")
+//            }
+            self.resetClassVariables()
+        }
     }
 }
 
