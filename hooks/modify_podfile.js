@@ -1,7 +1,10 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
+const Q = require('q');
+var child_process = require('child_process');
 
 module.exports = function(context) {
+    const deferred = Q.defer();
     const iosPlatformPath = path.join(context.opts.projectRoot, 'platforms/ios');
     const podfilePath = path.join(iosPlatformPath, 'Podfile');
 
@@ -19,12 +22,32 @@ end
 
     fs.readFile(podfilePath, 'utf8', function(err, data) {
         if (err) {
-            return console.log(err);
-        }
-        if (data.indexOf('post_install') === -1) { // Checks if post_install hook is not already added
-            fs.appendFile(podfilePath, postInstallScript, 'utf8', function(err) {
-                if (err) return console.log(err);
-            });
+            console.log(err);
+            deferred.reject(err);
+        } else {
+            if (data.indexOf('post_install') === -1) { // Checks if post_install hook is not already added
+                fs.appendFile(podfilePath, postInstallScript, 'utf8', function(err) {
+                    if (err) {
+                        console.log(err);
+                        deferred.reject(err);
+                    } else {
+                        //Run "pod install"
+                        var pathiOS = path.join(context.opts.projectRoot,"platforms","ios");
+                        try {
+                            child_process.execSync('pod install', {cwd: pathiOS});
+                            console.log("⭐️ Pod Install: Process finished ⭐️");
+                            deferred.resolve();
+                        } catch (error) {
+                            console.log("🚨 ERROR: ", error);
+                            deferred.reject(error);
+                        }
+                    }
+                });
+            } else {
+                deferred.resolve();
+            }
         }
     });
+
+    return deferred.promise;
 };
