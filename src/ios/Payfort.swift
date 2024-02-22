@@ -218,7 +218,8 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
                 }
             })
         } else {
-            //CALLBACK DE FALHA!!!
+            resetClassVariables()
+            sendPluginResult(callbackId: command.callbackId, status: CDVCommandStatus_ERROR, message: "Invalid Apple Pay parameters")
         }
     }
     
@@ -309,8 +310,9 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
             if let signature = paymentData["signature"] as? String {
                 request["apple_signature"] = signature
             }
-            if let header = paymentData["header"] as? Dictionary<String,String> {
+
 //Payfort SDK complains about these:
+//            if let header = paymentData["header"] as? Dictionary<String,String> {
 //                if let transactionId = header["transactionId"] {
 //                    request["apple_transactionId"] = transactionId
 //                }
@@ -320,7 +322,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
 //                if let publicKeyHash = header["publicKeyHash"] {
 //                    request["apple_publicKeyHash"] = publicKeyHash
 //                }
-            }
+//            }
             
 //Apple Pay does not return these:
 //            if let paymentMethod = paymentData["paymentMethod"] as? String {
@@ -339,8 +341,8 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
 //                request["apple_applicationData"] = applicationData
 //            }
         } else {
-            //SEND CALLBACK
-            //return
+            resetClassVariables()
+            return nil
         }
         
         var signatureRequest = [String:String]()
@@ -354,6 +356,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         if let signature = generateSignature(parameters: signatureRequest, passPhrase: passPhrase) {
             request["signature"] = signature
         } else {
+            resetClassVariables()
             return nil
         }
         
