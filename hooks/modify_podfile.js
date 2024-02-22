@@ -21,7 +21,7 @@ end
         if (err) {
             return console.log(err);
         }
-        if (data.indexOf('post_install') === -1) { // Check if post_install hook is not already added
+        if (data.indexOf('post_install') === -1) { // Checks if post_install hook is not already added
             fs.appendFile(podfilePath, postInstallScript, 'utf8', function(err) {
                 if (err) return console.log(err);
             });
