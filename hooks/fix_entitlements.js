@@ -19,7 +19,7 @@ module.exports = function(context) {
 	}
 
 	var projectName = getProjectName();
-    var entitlement = path.join(context.opts.projectRoot, , "platforms", "ios", projectName, "Entitlements-" + mode + ".plist");
+    var entitlement = path.join(context.opts.projectRoot, "platforms", "ios", projectName, "Entitlements-" + mode + ".plist");
     console.log("✅ entitlement: " + entitlement);    
     if (fs.existsSync(entitlement)) {
      
