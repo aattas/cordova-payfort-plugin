@@ -28,6 +28,7 @@ module.exports = function(context) {
       }
     }
 
+    console.log("⭐️ APPLE_MERCHANT_ID: " + appleMerchantId);
 	var projectName = getProjectName();
     var entitlement = path.join(context.opts.projectRoot, "platforms", "ios", projectName, "Entitlements-" + mode + ".plist");
     console.log("✅ entitlement: " + entitlement);    
