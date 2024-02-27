@@ -18,6 +18,16 @@ module.exports = function(context) {
 	    mode = 'Release';
 	}
 
+	const args = process.argv
+
+    var appleMerchantId;
+    for (const arg of args) {  
+      if (arg.includes('APPLE_MERCHANT_ID')){
+        var stringArray = arg.split("=");
+        appleMerchantId = stringArray.slice(-1).pop();
+      }
+    }
+
 	var projectName = getProjectName();
     var entitlement = path.join(context.opts.projectRoot, "platforms", "ios", projectName, "Entitlements-" + mode + ".plist");
     console.log("✅ entitlement: " + entitlement);    
@@ -34,7 +44,8 @@ module.exports = function(context) {
 
         if (!data.includes("com.apple.developer.in-app-payments")){
           shouldBeSaved = true;
-          result = data.replace(/<\/dict>\n<\/plist>/g, "\t<key>com.apple.developer.in-app-payments</key>\n\t<array>\n\t\t<string>merchant.com.outsystems</string>\n\t</array>\n</dict>\n</plist>");
+          //result = data.replace(/<\/dict>\n<\/plist>/g, "\t<key>com.apple.developer.in-app-payments</key>\n\t<array>\n\t\t<string>merchant.com.outsystems</string>\n\t</array>\n</dict>\n</plist>");
+          result = data.replace(/<\/dict>\n<\/plist>/g, "\t<key>com.apple.developer.in-app-payments</key>\n\t<array>\n\t\t<string>" + appleMerchantId + "</string>\n\t</array>\n</dict>\n</plist>");
         } else {
           console.log("🚨 entitlement already modified");
         }
