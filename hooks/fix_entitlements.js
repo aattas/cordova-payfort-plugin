@@ -13,10 +13,12 @@ function getProjectName() {
 }
 
 module.exports = function(context) {
+	console.log("👉 context.cmdLine: " + context.cmdLine);
 	var mode = 'Debug';
 	if (context.cmdLine.indexOf('release') >= 0) {
 	    mode = 'Release';
 	}
+
 
 	const args = process.argv
 
