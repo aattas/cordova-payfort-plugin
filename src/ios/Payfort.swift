@@ -330,7 +330,9 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         
         // Prepare the request for PayFort
         guard var request = preparePayFortRequest(from: payment, cdvcommand: self.command) else {
-            //CALLBACK AQUI
+            if let cdvcommand = self.command {
+                sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_ERROR, message: "Error: Could not preparePayFortRequest")
+            }
             completion(.failure)
             resetClassVariables()
             return
@@ -344,7 +346,9 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
                     return
             }
         } else {
-            //CALLBACK
+            if let cdvcommand = self.command {
+                sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_ERROR, message: "Error: Could not fetch signature")
+            }
         }
         
     }
