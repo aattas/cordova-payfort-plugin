@@ -242,7 +242,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         request["order_description"] = orderDescription
         request["customer_ip"] = customerIp
         request["customer_name"] = customerName
-        request["SettlementReference"] = settlementReference
+        request["settlement_reference"] = settlementReference
         // Merchant extras
                request["merchant_extra"] = merchantExtra
         //        request["merchant_extra1"] = merchantExtra1
