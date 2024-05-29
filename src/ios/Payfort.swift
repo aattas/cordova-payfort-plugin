@@ -213,8 +213,8 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
               let customerName = cdvcommand.arguments[17] as? String,
               let phoneNumber = cdvcommand.arguments[18] as? String,
               //let tokenName = cdvcommand.arguments[19] as? String,
-              //let settlementReference = cdvcommand.arguments[20] as? String,
-//              let merchantExtra = cdvcommand.arguments[21] as? String,
+              let settlementReference = cdvcommand.arguments[20] as? String,
+              let merchantExtra = cdvcommand.arguments[21] as? String,
 //              let merchantExtra1 = cdvcommand.arguments[22] as? String,
 //              let merchantExtra2 = cdvcommand.arguments[23] as? String,
 //              let merchantExtra3 = cdvcommand.arguments[24] as? String,
@@ -244,7 +244,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         request["customer_name"] = customerName
         
         // Merchant extras
-        //        request["merchant_extra"] = merchantExtra
+               request["merchant_extra"] = merchantExtra
         //        request["merchant_extra1"] = merchantExtra1
         //        request["merchant_extra2"] = merchantExtra2
         //        request["merchant_extra3"] = merchantExtra3
@@ -350,9 +350,9 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
                 sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_ERROR, message: "Error: Could not fetch signature")
             }
         }
-        
+
     }
-    
+
     func paymentAuthorizationViewControllerDidFinish(_ controller: PKPaymentAuthorizationViewController) {
         controller.dismiss(animated: true) {
 //            switch self.paymentState {
