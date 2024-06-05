@@ -214,7 +214,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
               let phoneNumber = cdvcommand.arguments[18] as? String,
               //let tokenName = cdvcommand.arguments[19] as? String,
               let settlementReference = cdvcommand.arguments[20] as? String,
-              let merchantExtra = cdvcommand.arguments[21] as? String,
+            //   let merchantExtra = cdvcommand.arguments[21] as? String,
 //              let merchantExtra1 = cdvcommand.arguments[22] as? String,
 //              let merchantExtra2 = cdvcommand.arguments[23] as? String,
 //              let merchantExtra3 = cdvcommand.arguments[24] as? String,
