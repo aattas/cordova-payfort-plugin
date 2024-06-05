@@ -213,7 +213,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
               let customerName = cdvcommand.arguments[17] as? String,
               let phoneNumber = cdvcommand.arguments[18] as? String,
               //let tokenName = cdvcommand.arguments[19] as? String,
-              let settlementReference = cdvcommand.arguments[20] as? String,
+            //   let settlementReference = cdvcommand.arguments[20] as? String,
             //   let merchantExtra = cdvcommand.arguments[21] as? String,
 //              let merchantExtra1 = cdvcommand.arguments[22] as? String,
 //              let merchantExtra2 = cdvcommand.arguments[23] as? String,
@@ -242,7 +242,7 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
         request["order_description"] = orderDescription
         request["customer_ip"] = customerIp
         request["customer_name"] = customerName
-        request["settlement_reference"] = settlementReference
+        // request["settlement_reference"] = settlementReference
         // Merchant extras
         // request["merchant_extra"] = merchantExtra
         //        request["merchant_extra1"] = merchantExtra1
