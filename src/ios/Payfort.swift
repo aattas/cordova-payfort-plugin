@@ -9,6 +9,14 @@ import CryptoKit
 import PayFortSDK
 import PassKit
 
+enum PaymentState {
+    case notStarted
+    case success
+    case userCancelled
+    case failure
+}
+
+
 @objc(Payfort)
 class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
     var currentCallbackId: String?
@@ -366,11 +374,4 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
             self.resetClassVariables()
         }
     }
-}
-
-enum PaymentState {
-    case notStarted
-    case success
-    case userCancelled
-    case failure
 }
