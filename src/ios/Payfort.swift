@@ -355,14 +355,14 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
 
     func paymentAuthorizationViewControllerDidFinish(_ controller: PKPaymentAuthorizationViewController) {
         controller.dismiss(animated: true) {
-//            switch self.paymentState {
-//            case .success:
-//                print("✅ Payment completed successfully.")
-//            case .failure:
-//                print("🚨 Payment failed.")
-//            case .notStarted, .userCancelled:
-//                print("⚠️ Payment was canceled by the user.")
-//            }
+           switch self.paymentState {
+           case .success:
+               print("✅ Payment completed successfully.")
+           case .failure:
+               print("🚨 Payment failed.")
+           case .notStarted, .userCancelled:
+               sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_ERROR, message: "Canceled")
+           }
             self.resetClassVariables()
         }
     }
