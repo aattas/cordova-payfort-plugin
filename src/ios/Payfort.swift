@@ -369,7 +369,16 @@ class Payfort: CDVPlugin, PKPaymentAuthorizationViewControllerDelegate {
            case .failure:
                print("🚨 Payment failed.")
            case .notStarted, .userCancelled:
-               self.sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_ERROR, message: "Canceled")
+            //    self.sendPluginResult(callbackId: cdvcommand.callbackId, status: CDVCommandStatus_ERROR, message: "Canceled")
+            if let command = self.command {
+                self.sendPluginResult(
+                    callbackId: command.callbackId,
+                    status: CDVCommandStatus_ERROR,
+                    message: "Canceled"
+                )
+            } else {
+                print(" Command not available for callback")
+            }
            }
             self.resetClassVariables()
         }
