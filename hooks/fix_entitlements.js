@@ -1,67 +1,140 @@
-var fs = require('fs'), path = require('path');
+/* fix_entitlements.js — supports multiple APPLE_MERCHANT_ID* variables and merges them into the entitlement array */
+
+var fs = require("fs");
+var path = require("path");
 
 function getProjectName() {
-    var config = fs.readFileSync('config.xml').toString();
-    var parseString = require('xml2js').parseString;
-    var name;
-    parseString(config, function (err, result) {
-        if (err) throw new Error("Failed to parse config.xml");
-        name = result.widget.name.toString();
-        const r = /\B\s+|\s+\B/g;  //Removes trailing and leading spaces
-        name = name.replace(r, '');
-    });
-    return name || null;
+  var config = fs.readFileSync("config.xml").toString();
+  var parseString = require("xml2js").parseString;
+  var name;
+  parseString(config, function (err, result) {
+    if (err) throw new Error("Failed to parse config.xml");
+    name = result.widget.name.toString();
+    // remove leading/trailing/inner stray spaces like original
+    name = name.replace(/\B\s+|\s+\B/g, "");
+  });
+  return name || null;
 }
 
-function modifyEntitlementFile(filePath, appleMerchantId) {
-    if (fs.existsSync(filePath)) {
-        fs.readFile(filePath, 'utf8', function (err, data) {
-            if (err) {
-                throw new Error('🚨 Unable to read file: ' + filePath + ' Error: ' + err);
-            }
-            var result = data;
-            var shouldBeSaved = false;
+function unique(list) {
+  return Array.from(new Set(list.filter(Boolean)));
+}
 
-            if (!data.includes("com.apple.developer.in-app-payments")) {
-                shouldBeSaved = true;
-                result = data.replace(/<\/dict>\n<\/plist>/g, "\t<key>com.apple.developer.in-app-payments</key>\n\t<array>\n\t\t<string>" + appleMerchantId + "</string>\n\t</array>\n</dict>\n</plist>");
-            } else {
-                console.log("🚨 File already modified: " + filePath);
-            }
+function toMerchantList(raw) {
+  if (!raw) return [];
+  return String(raw)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
-            if (shouldBeSaved) {
-                fs.writeFile(filePath, result, 'utf8', function (err) {
-                    if (err) {
-                        throw new Error('🚨 Unable to write into file: ' + filePath + ' Error: ' + err);
-                    } else {
-                        console.log("✅ File edited successfully: " + filePath);
-                    }
-                });
-            }
-        });
-    } else {
-        throw new Error("🚨 WARNING: File was not found: " + filePath + ". The build phase may not finish successfully");
+function collectMerchantIdsFromArgs(argv) {
+  // Accept APPLE_MERCHANT_ID and also APPLE_MERCHANT_ID2/3/…
+  // Allow csv in any of them, e.g. APPLE_MERCHANT_ID="merchant.a,merchant.b"
+  let all = [];
+  for (const arg of argv) {
+    if (arg.startsWith("APPLE_MERCHANT_ID")) {
+      const parts = arg.split("=");
+      const value = parts.slice(1).join("="); // in case value also contains '='
+      all = all.concat(toMerchantList(value));
     }
+  }
+  return unique(all);
 }
 
-module.exports = function(context) {
-    const args = process.argv
-    var appleMerchantId;
-    for (const arg of args) {  
-      if (arg.includes('APPLE_MERCHANT_ID')){
-        var stringArray = arg.split("=");
-        appleMerchantId = stringArray.slice(-1).pop();
+function ensureEntitlementsHasMerchants(plistContent, merchants) {
+  // Inject or merge into:
+  // <key>com.apple.developer.in-app-payments</key>
+  // <array> ... <string>merchant.com.foo</string> ... </array>
+  const key = "com.apple.developer.in-app-payments";
+  const keyRe =
+    /<key>com\.apple\.developer\.in-app-payments<\/key>\s*<array>([\s\S]*?)<\/array>/m;
+
+  let changed = false;
+  if (!keyRe.test(plistContent)) {
+    // Create a fresh block with all merchants before </dict></plist>
+    const merchantsXml = merchants
+      .map((id) => `\t\t<string>${id}</string>`)
+      .join("\n");
+    const block =
+      `\t<key>${key}</key>\n\t<array>\n` + merchantsXml + `\n\t</array>\n`;
+    const out = plistContent.replace(
+      /<\/dict>\s*<\/plist>\s*$/m,
+      block + `</dict>\n</plist>`
+    );
+    return { content: out, changed: true };
+  }
+
+  // Merge into existing array; avoid duplicates
+  const out = plistContent.replace(keyRe, (match, inner) => {
+    let updatedInner = inner;
+    merchants.forEach((id) => {
+      const idRe = new RegExp(
+        `<string>\\s*${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*<\\/string>`,
+        "m"
+      );
+      if (!idRe.test(updatedInner)) {
+        updatedInner = `${updatedInner}\n\t\t<string>${id}</string>`;
+        changed = true;
       }
-    }
+    });
+    return `<key>${key}</key>\n\t<array>${updatedInner}\n\t</array>`;
+  });
 
-    console.log("⭐️ APPLE_MERCHANT_ID: " + appleMerchantId);
-    var projectName = getProjectName();
-    var entitlementDebug = path.join(context.opts.projectRoot, "platforms", "ios", projectName, "Entitlements-Debug.plist");
-    var entitlementRelease = path.join(context.opts.projectRoot, "platforms", "ios", projectName, "Entitlements-Release.plist");
-    
-    console.log("✅ entitlementDebug: " + entitlementDebug); 
-    console.log("✅ entitlementRelease: " + entitlementRelease);    
-    
-    modifyEntitlementFile(entitlementDebug, appleMerchantId);
-    modifyEntitlementFile(entitlementRelease, appleMerchantId);
+  return { content: out, changed };
 }
+
+function modifyEntitlementFile(filePath, merchantIds) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(
+      "🚨 WARNING: File not found: " +
+        filePath +
+        ". The build phase may not finish successfully"
+    );
+  }
+
+  const data = fs.readFileSync(filePath, "utf8");
+  const { content, changed } = ensureEntitlementsHasMerchants(data, merchantIds);
+
+  if (changed) {
+    fs.writeFileSync(filePath, content, "utf8");
+    console.log("✅ Entitlements updated:", filePath);
+  } else {
+    console.log("ℹ️ No entitlement changes needed:", filePath);
+  }
+}
+
+module.exports = function (context) {
+  const argv = process.argv || [];
+  const merchantIds = collectMerchantIdsFromArgs(argv);
+
+  if (!merchantIds.length) {
+    throw new Error(
+      "🚨 No APPLE_MERCHANT_ID variables supplied. Pass at least one variable (e.g. APPLE_MERCHANT_ID=merchant.com.yourid)."
+    );
+  }
+
+  console.log("⭐️ Apple Pay merchant IDs:", merchantIds);
+
+  const projectName = getProjectName();
+  const entitlementDebug = path.join(
+    context.opts.projectRoot,
+    "platforms",
+    "ios",
+    projectName,
+    "Entitlements-Debug.plist"
+  );
+  const entitlementRelease = path.join(
+    context.opts.projectRoot,
+    "platforms",
+    "ios",
+    projectName,
+    "Entitlements-Release.plist"
+  );
+
+  console.log("✅ entitlementDebug:", entitlementDebug);
+  console.log("✅ entitlementRelease:", entitlementRelease);
+
+  modifyEntitlementFile(entitlementDebug, merchantIds);
+  modifyEntitlementFile(entitlementRelease, merchantIds);
+};
